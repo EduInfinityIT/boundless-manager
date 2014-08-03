@@ -6,11 +6,13 @@ var srtParser = require('subtitles-parser');
 commander.version('0.0.1')
   .option('-c --comment [comment Msg]', 'Add comment')
   .option('-f --folder [folderId]', 'Get links from GDrive folder')
+  .option('-o --output [filename]', 'Save output into the file')
   .parse(process.argv);
 
 var comment = commander.comment;
 var filenames = commander.args;
 var folderId = commander.folder;
+var outFile = commander.output;
 
 var htmlFactory = require('./htmlFactory');
 var gDrive = require('./gDrive');
@@ -102,6 +104,26 @@ async.waterfall([
   
   },
 
+  function (results, cb) {
+
+    // Prepare csv
+    var csv = results.map(function (result) {
+
+      return [result.title, result.duration, result.length, result.link].join(',');
+    
+    }).join('\n');
+
+    if (outFile) {
+
+      return fs.writeFile(outFile, csv, cb);
+    
+    }
+
+    console.log(csv);
+    cb(null);
+  
+  }
+
 ], function (err, results) {
 
   if (err) {
@@ -110,7 +132,6 @@ async.waterfall([
   
   } else {
 
-    console.log(results);
     console.log('Done');
 
   }
